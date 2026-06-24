@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Flap but Make it Chaos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="game-container"></div>
+    <div id="ui-layer">
+      <!-- Splash Screen -->
+      <div id="splash-screen" class="overlay">
+        <div class="splash-content">
+          <div class="splash-title-container">
+            <h1 class="bounce-text" style="--i:1">A</h1>
+            <h1 class="bounce-text" style="--i:2">R</h1>
+            <h1 class="bounce-text" style="--i:3">R</h1>
+            <h1 class="bounce-text" style="--i:4">O</h1>
+            <h1 class="bounce-text" style="--i:5">W</h1>
+          </div>
+          <h2 class="chaos-color zoom-text">CHAOS!</h2>
+          <button id="btn-enter" class="btn-primary mt-lg pulse-btn">TAP TO ENTER</button>
+        </div>
+      </div>
+
+      <!-- Chaos Banner -->
+      <div id="chaos-banner">
+        <span id="chaos-emoji">🌀</span>
+        <span id="chaos-text">CHAOS!</span>
+      </div>
+
+      <!-- Mode Selector -->
+      <div id="mode-select" class="hidden">
+        <div class="glass-panel modal-panel">
+          <h1>⚡ SELECT MODE</h1>
+          <p class="subtitle">Pick how you want to suffer</p>
+          <div class="mode-section-label">Classic</div>
+          <div id="mode-grid">
+            <div class="mode-card normal-card" data-mode="normal">
+              <span class="emoji">🎮</span>
+              <div class="card-content">
+                <div class="name">NORMAL CHAOS</div>
+                <div class="desc">Every 5 pipes triggers a random chaos effect. The original madness.</div>
+              </div>
+            </div>
+          </div>
+          <div class="mode-section-label" style="margin-top:18px">Chaos Modes</div>
+          <div id="mode-grid-chaos"></div>
+          <button id="btn-close-modes" class="btn-secondary mt-lg">CLOSE</button>
+        </div>
+      </div>
+
+      <!-- Start Screen Overlay -->
+      <div id="start-overlay" class="overlay hidden">
+        <div class="glass-panel main-panel">
+          <h1 id="start-title">FLAP BUT</h1>
+          <h2 id="start-subtitle">MAKE IT CHAOS</h2>
+          <p id="start-desc">Every 5 pipes = random madness</p>
+
+          <div class="score-container" style="margin-bottom: 24px; padding: 16px 24px;">
+            <div class="score-box">
+              <span class="score-label">BEST SCORE</span>
+              <span id="start-best-score" class="score-value best">0</span>
+            </div>
+            <div class="score-box">
+              <span class="score-label">MAX SPEED</span>
+              <span id="start-max-speed" class="score-value" style="color: #38bdf8;">0 MPH</span>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button id="btn-play" class="btn-primary btn-large pulse-btn">▶ PLAY</button>
+            <button id="btn-modes-start" class="btn-secondary">⚡ MODES</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Death Screen Overlay -->
+      <div id="death-overlay" class="overlay hidden">
+        <div class="glass-panel scorecard">
+          <h1 class="red">BONK!</h1>
+          <p id="death-taunt" class="taunt-text"></p>
+          
+          <div class="score-container">
+            <div class="score-box">
+              <span class="score-label">SCORE</span>
+              <span id="death-score" class="score-value">0</span>
+            </div>
+            <div class="score-box">
+              <span class="score-label">BEST</span>
+              <span id="death-best" class="score-value best">0</span>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button id="btn-restart" class="btn-primary btn-large pulse-btn">↻ REPLAY</button>
+            <button id="btn-modes-death" class="btn-secondary">⚡ MODES</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
