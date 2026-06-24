@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { UI, CHAOS_EFFECTS } from '../main.js';
+import { AudioManager } from './AudioManager.js';
 
 export class ChaosManager {
   constructor(scene) {
@@ -36,6 +37,7 @@ export class ChaosManager {
       UI.showBanner(this.activeObj.emoji, this.activeObj.label, this.activeObj.color);
     }
     this.scene.spawnChaosParticles(this.activeObj.color);
+    AudioManager.playChaosActivate();
 
     // Side-effects on trigger
     if (this.activeId === 'wind') {
@@ -48,7 +50,8 @@ export class ChaosManager {
     if (this.activeId === 'drunk') this.drunkOffset = 0;
     if (this.activeId === 'dash')  { this.dashVX = 0; this.dashCooldown = 0; }
     if (this.activeId === 'speed_roulette') {
-      this.rouletteSpeed = 1.4; this.rouletteTimer = 0; this.rouletteFast = false;
+      const baseMult = (window.STARTING_SPEED_MPH || 40) / 20;
+      this.rouletteSpeed = baseMult; this.rouletteTimer = 0; this.rouletteFast = false;
     }
   }
 
@@ -110,9 +113,11 @@ export class ChaosManager {
         this.rouletteTimer = 0;
         this.rouletteFast  = !this.rouletteFast;
         const diff = this.scene.getDiff();
+        const baseMult = (window.STARTING_SPEED_MPH || 40) / 20;
         this.rouletteSpeed = this.rouletteFast
-          ? 1.4 + diff * 2.4 + 2.2   // turbo
-          : 0.4;                      // crawl
+          ? baseMult + diff * 2.4 + 2.2   // turbo
+          : baseMult * 0.3;               // crawl
+        AudioManager.playSpeedChange(this.rouletteFast);
       }
     }
 
@@ -138,7 +143,8 @@ export class ChaosManager {
     this.windForceX = 0; this.windForceY = 0;
     this.windTargetX = 0; this.windTargetY = 0;
     this.dashVX = 0; this.dashCooldown = 0;
-    this.rouletteSpeed = 1.4; this.rouletteTimer = 0; this.rouletteFast = false;
+    const baseMult = (window.STARTING_SPEED_MPH || 40) / 20;
+    this.rouletteSpeed = baseMult; this.rouletteTimer = 0; this.rouletteFast = false;
 
     this.scene.cameras.main.setZoom(1);
     this.scene.cameras.main.setRotation(0);

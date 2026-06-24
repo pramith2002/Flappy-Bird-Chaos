@@ -1,6 +1,7 @@
 import './style.css';
 import Phaser from 'phaser';
 import { GameScene } from './scenes/GameScene.js';
+import { AudioManager } from './systems/AudioManager.js';
 
 const config = {
   type: Phaser.AUTO,
@@ -35,6 +36,11 @@ const btnEnter      = document.getElementById('btn-enter');
 const btnPlay       = document.getElementById('btn-play');
 const btnRestart    = document.getElementById('btn-restart');
 const btnCloseModes = document.getElementById('btn-close-modes');
+const btnMute       = document.getElementById('btn-mute');
+const speedSlider   = document.getElementById('starting-speed-slider');
+const speedDisplay  = document.getElementById('speed-display');
+
+window.STARTING_SPEED_MPH = 40;
 
 let splashDismissed = false;
 
@@ -62,6 +68,7 @@ export const UI = {
       splashScreen.classList.remove('hidden');
       return;
     }
+    AudioManager.playMenuMusic();
     modeSelect.classList.add('hidden');
     startOverlay.classList.remove('hidden');
     deathOverlay.classList.add('hidden');
@@ -88,6 +95,7 @@ export const UI = {
     modeSelect.classList.add('hidden');
     startOverlay.classList.add('hidden');
     deathOverlay.classList.remove('hidden');
+    AudioManager.playDeathStinger();
     document.getElementById('death-score').textContent = score;
     document.getElementById('death-best').textContent = best;
     document.getElementById('death-taunt').textContent = Phaser.Math.RND.pick(TAUNTS);
@@ -108,10 +116,30 @@ export const UI = {
   }
 };
 
+// ── Mute Button ────────────────────────────────────────────────────────
+(function initMuteBtn() {
+  const muted = localStorage.getItem('fbc_muted') === 'true';
+  btnMute.textContent = muted ? '🔇' : '🔊';
+  if (muted) btnMute.classList.add('muted');
+})();
+
+btnMute.addEventListener('click', () => {
+  const nowMuted = AudioManager.toggleMute();
+  btnMute.textContent = nowMuted ? '🔇' : '🔊';
+  btnMute.classList.toggle('muted', nowMuted);
+});
+
 btnEnter.addEventListener('click', () => {
+  AudioManager.unlock();
   splashDismissed = true;
   splashScreen.classList.add('hidden');
   UI.showStartScreen();
+});
+
+// Speed slider
+speedSlider.addEventListener('input', (e) => {
+  window.STARTING_SPEED_MPH = parseInt(e.target.value, 10);
+  speedDisplay.textContent = window.STARTING_SPEED_MPH;
 });
 
 btnModesStart.addEventListener('click', UI.showModeSelect);
@@ -120,11 +148,15 @@ btnCloseModes.addEventListener('click', UI.hideModeSelect);
 
 btnPlay.addEventListener('click', () => {
   UI.hideAll();
+  AudioManager.stopMusic();
+  AudioManager.playGameMusic(0);
   game.scene.getScene('GameScene').startGame();
 });
 
 btnRestart.addEventListener('click', () => {
   UI.hideAll();
+  AudioManager.stopMusic();
+  AudioManager.playGameMusic(0);
   game.scene.getScene('GameScene').startGame();
 });
 

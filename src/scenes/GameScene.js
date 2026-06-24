@@ -3,6 +3,7 @@ import { Bird } from '../objects/Bird.js';
 import { PipeManager } from '../objects/PipeManager.js';
 import { ChaosManager } from '../systems/ChaosManager.js';
 import { UI } from '../main.js';
+import { AudioManager } from '../systems/AudioManager.js';
 
 export class GameScene extends Phaser.Scene {
   constructor() {
@@ -152,6 +153,7 @@ export class GameScene extends Phaser.Scene {
       localStorage.setItem('arrow_max_speed', this.maxSpeed.toString());
     }
     this.spawnBurst(this.bird.container.x, this.bird.container.y, 0xf87171, 18);
+    AudioManager.playDie();
     window.floatyHeld = false;
     window.floatyDragVY = 0;
     UI.showDeathScreen(this.score, this.bestScore);
@@ -170,6 +172,7 @@ export class GameScene extends Phaser.Scene {
         this.chaosManager.dashCooldown = 28;
         this.bird.flap(this.getFlapStrength() * 0.9);
         this.spawnBurst(this.bird.container.x, this.bird.container.y, 0xfb923c, 10);
+        AudioManager.playDash();
       }
       return;
     }
@@ -177,6 +180,7 @@ export class GameScene extends Phaser.Scene {
     const gf = chaos === 'gravity_flip';
     this.bird.flap(gf ? -this.getFlapStrength() : this.getFlapStrength());
     this.spawnBurst(this.bird.container.x, this.bird.container.y, 0xfacc15, 6);
+    AudioManager.playFlap();
   }
 
   getDiff() { return Math.min(this.score / 30, 1); }
@@ -190,11 +194,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   getBasePipeSpd() {
+    const baseMult = (window.STARTING_SPEED_MPH || 40) / 10;
+    const slope = 4.0;
     const chaos = this.chaosManager.activeId;
-    if (chaos === 'speed_boost')    return 1.4 + this.getDiff() * 2.4 + 1.6;
-    if (chaos === 'slow_mo')        return 0.6 + this.getDiff() * 0.8;
+    if (chaos === 'speed_boost')    return baseMult + this.getDiff() * slope + 3.0;
+    if (chaos === 'slow_mo')        return (baseMult * 0.4) + this.getDiff() * (slope * 0.4);
     if (chaos === 'speed_roulette') return this.chaosManager.rouletteSpeed;
-    return 1.4 + this.getDiff() * 2.4;
+    return baseMult + this.getDiff() * slope;
   }
 
   getGapSize() {
@@ -207,16 +213,25 @@ export class GameScene extends Phaser.Scene {
 
   getNextPipeInterval() {
     const chaos = this.chaosManager.activeId;
-    let base = 130 + (1 - this.getDiff()) * 60;
+    
+    // Calculate the desired distance based on the original 1.4 speed baseline
+    let distanceFrames = 130 + (1 - this.getDiff()) * 60;
 
     if (chaos === 'speed_boost') {
-      base = 55 + (1 - this.getDiff()) * 30;
+      distanceFrames = 55 + (1 - this.getDiff()) * 30;
     } else if (chaos) {
       // Increase distance by 50% during any chaos mode
-      base *= 1.5;
+      distanceFrames *= 1.5;
     }
 
-    return base * (0.8 + Math.random() * 0.7);
+    // Convert to a raw horizontal pixel distance assuming speed=1.4,
+    // apply randomization, then divide by the ACTUAL current speed.
+    // This guarantees the gaps between pipes stay physically the same 
+    // no matter how fast the game is scrolling.
+    const physicalDistance = distanceFrames * 1.4;
+    const interval = (physicalDistance * (0.8 + Math.random() * 0.7)) / this.getBasePipeSpd();
+    
+    return interval;
   }
 
   onPipePassed(pipe) {
@@ -224,8 +239,11 @@ export class GameScene extends Phaser.Scene {
     this.pipesCleared++;
     this.updateHUD();
     this.spawnBurst(this.bird.container.x + 30, this.bird.container.y, 0x4ade80, 8);
+    AudioManager.playScore(this.score);
     if (window.GAME_MODE === 'normal' && this.pipesCleared % 5 === 0) {
       this.chaosManager.trigger();
+    } else {
+      AudioManager.updateGameTempo(this.score);
     }
   }
 
@@ -356,7 +374,7 @@ export class GameScene extends Phaser.Scene {
     const chaos = this.chaosManager.activeId;
 
     // Calculate current speed
-    this.currentSpeed = Math.floor(this.getBasePipeSpd() * 20);
+    this.currentSpeed = Math.floor(this.getBasePipeSpd() * 10);
     this.updateHUD();
 
     // ── Speed Roulette corner label ───────────────────────
@@ -443,6 +461,7 @@ export class GameScene extends Phaser.Scene {
         this.bird.container.y = this.scale.height - gh - this.bird.body.radius;
         this.bird.body.velocity.y = -Math.abs(this.bird.body.velocity.y) * 1.5 - 250;
         this.spawnBurst(this.bird.container.x, this.bird.container.y, 0xf43f5e, 10);
+        AudioManager.playBounce();
       } else {
         this.die(); return;
       }
@@ -454,6 +473,7 @@ export class GameScene extends Phaser.Scene {
         this.bird.container.y = this.bird.body.radius;
         this.bird.body.velocity.y = Math.abs(this.bird.body.velocity.y) * 1.5 + 250;
         this.spawnBurst(this.bird.container.x, this.bird.container.y, 0xf43f5e, 10);
+        AudioManager.playBounce();
       } else if (chaos === 'gravity_flip') { 
         this.die(); return; 
       } else {
