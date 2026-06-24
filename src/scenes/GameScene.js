@@ -120,7 +120,6 @@ export class GameScene extends Phaser.Scene {
     this.score = 0;
     this.pipesCleared = 0;
     this.pipeTimer = 0;
-    this.nextSpawn = 0;
     this.updateHUD();
     this.bird.container.setPosition(this.scale.width * 0.22, this.scale.height * 0.45);
     this.bird.body.velocity.y = 0;
@@ -128,6 +127,11 @@ export class GameScene extends Phaser.Scene {
     this.pipeManager.reset();
     this.chaosManager.reset();
     this.particleList = [];
+    
+    // Determine the gap Y for the first pipe and set the initial spawn delay
+    this.nextGapY = this.pipeManager.getRandomGapY(this.getGapSize());
+    // Give a nice initial gap before the first pipe spawns
+    this.nextSpawn = this.getNextPipeInterval() * 1.5;
     
     // Cleanup menu birds
     if (this.menuBirds) {
@@ -211,7 +215,7 @@ export class GameScene extends Phaser.Scene {
     return 260 - this.getDiff() * 85;
   }
 
-  getNextPipeInterval() {
+  getNextPipeInterval(diffY = 0) {
     const chaos = this.chaosManager.activeId;
     
     // Calculate the desired distance based on the original 1.4 speed baseline
@@ -224,11 +228,19 @@ export class GameScene extends Phaser.Scene {
       distanceFrames *= 1.5;
     }
 
-    // Convert to a raw horizontal pixel distance assuming speed=1.4,
+    // Convert to a raw horizontal pixel distance assuming speed=1.4
+    let physicalDistance = distanceFrames * 1.4;
+    
+    // Add extra horizontal distance if the vertical gap between the current pipe 
+    // and the next pipe is very large. This gives the bird time to climb or dive.
+    if (diffY > 100) {
+      const extraY = diffY - 100;
+      physicalDistance += extraY * 1.2;
+    }
+
     // apply randomization, then divide by the ACTUAL current speed.
     // This guarantees the gaps between pipes stay physically the same 
     // no matter how fast the game is scrolling.
-    const physicalDistance = distanceFrames * 1.4;
     const interval = (physicalDistance * (0.8 + Math.random() * 0.7)) / this.getBasePipeSpd();
     
     return interval;
@@ -485,14 +497,15 @@ export class GameScene extends Phaser.Scene {
     // ── Pipes ─────────────────────────────────────────────
     this.pipeTimer += (delta / 16.66);
     if (this.pipeTimer >= this.nextSpawn) {
-      const p = this.pipeManager.spawnPipe(this.getGapSize());
-      if (this.pipesCleared === 0 && this.pipeManager.pipes.length === 1) {
-        // bring the first pipe closer so it happens soon
-        p.x = this.scale.width; 
-        p.cx = p.x;
-      }
+      const currentGapY = this.nextGapY;
+      const gapSize = this.getGapSize();
+      this.nextGapY = this.pipeManager.getRandomGapY(gapSize);
+      
+      this.pipeManager.spawnPipe(gapSize, currentGapY);
       this.pipeTimer = 0;
-      this.nextSpawn = this.getNextPipeInterval();
+      
+      const diffY = Math.abs(this.nextGapY - currentGapY);
+      this.nextSpawn = this.getNextPipeInterval(diffY);
     }
     this.pipeManager.updatePipes(time, delta, this.getBasePipeSpd(), this.bird);
 

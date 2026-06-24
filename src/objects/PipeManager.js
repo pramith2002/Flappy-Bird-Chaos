@@ -27,14 +27,16 @@ export class PipeManager {
     }
   }
 
-  spawnPipe(gapSize) {
-    const W = this.scene.scale.width;
+  getRandomGapY(gapSize) {
     const H = this.scene.scale.height;
     const gh = 55;
     const minY = 70;
     const maxY = H - gh - gapSize - 50;
+    return Phaser.Math.Between(minY, maxY);
+  }
 
-    const gapY        = Phaser.Math.Between(minY, maxY);
+  spawnPipe(gapSize, gapY) {
+    const W = this.scene.scale.width;
     const waveOffset  = Math.random() * Math.PI * 2;
     const hue         = Math.floor(Math.random() * 360);
     const pipeGraphics = this.scene.add.graphics();
